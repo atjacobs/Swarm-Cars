@@ -1,0 +1,2 @@
+MyClient.Disconnect();
+Client.UnloadViconDataStreamSDK();
