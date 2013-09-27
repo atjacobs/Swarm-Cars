@@ -1,10 +1,7 @@
 function [outVect] = squash(inVect)
 % This functions receives an input vector and outputs a vector
 % and changes it's magnitude, possibly even the sign of the magnitude.
-% This is used by plugging in the distance vector between two agents.
-% The output is then the "forcing" vector--it pulls agents closer if
-% they are beyond their desired lattice distance and pushes them if they
-% are closer, similar to Van der Waals forces. 
+% This is used by plugging in the distance vector between two 
 d = norm(inVect);       % Input norm
 if d == 0 
     outVect = [0;0];    % Return zero if zero distance

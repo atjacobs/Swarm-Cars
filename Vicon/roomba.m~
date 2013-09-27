@@ -32,6 +32,7 @@ while(toc(runClock) < runTime)
             turning = 0;
         end
     end
+%     disp(toc(runClock))
 end
 CM(s,0,0);
 track = track/1000;
