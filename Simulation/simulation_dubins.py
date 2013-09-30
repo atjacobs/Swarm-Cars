@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/python
 """
 Alex Jacobs, 2013
 
@@ -21,6 +21,7 @@ from numpy import *
 import pylab as p
 from scipy import integrate
 import scipy.linalg
+import pdb
 
 """ 
 First let's define the forcing function that determines the ideal distance.  It should:
@@ -33,17 +34,19 @@ So if describing a potential energy function, it should be like a Van der Waals 
 """
 
 # Some simulation parameters.
-V = 1;         		# Velocity
+V = 1         		# Velocity
 runTime = 30;   	# Time to run simulation
-N = 5 				# number of agents
+N = 2 				# number of agents
 X0 = random.rand(3*N)	#ICs 
-# X0 = random.rand(1,3)	#ICs 
+minTurningRadius = .5
+maxThetaDot = V/minTurningRadius
 
 ALPHA = .9
 OFFSET = .75
 
 def scalingFunction(r):
 	d = sqrt(dot(r,r))
+	# This function meets all the criteria above.
 	return -1*exp(-ALPHA*d)*(40*(d-OFFSET))
 
 distance = linspace(0,10,50)
@@ -73,26 +76,39 @@ def f1(X,t=0):
 			r = X[3*agentIndex:3*agentIndex+2] - X[3*otherAgentIndex:3*otherAgentIndex+2]
 			rNorm = sqrt(dot(r,r))
 			force +=  r/rNorm * scalingFunction(rNorm)
-		# dX_dt[agentIndex,:] = [V*cos(X[agentIndex,2]),
-		# V*sin(X[agentIndex,2]),
-		# ]
-		dX_dt[3*agentIndex:3*agentIndex+2] = array([force[0,0],force[0,1]])
-	dX_dt[-3:] = [V*cos(X[-1]),V*sin(X[-1]),0]
+		# print "Force vector:", force
+		# We now have a "desired direction" vector.
+		# Let's do a simple sliding mode controller:
+		# The control input will simply be the max turning rate thrown
+		# Times the sign of the error signal
+		forceAngle =  arctan2(force[0,1],force[0,0])
+		headingError = forceAngle - X[3*agentIndex+2]
+		print "forceAngle:", forceAngle*180/pi
+		print "headingError", headingError*180/pi
+		dX_dt[3*agentIndex:3*agentIndex+3] = [V*cos(X[3*agentIndex + 2]),
+		V*sin(X[3*agentIndex+2]),
+		maxThetaDot*sign(headingError)]
+		#print "Control input:", maxThetaDot*sign(headingError)
+	dX_dt[-3:] = [.75*V*cos(X[-1]),.75*V*sin(X[-1]),0]
 	return dX_dt
 
-# Integrate the system.
+X0 = array([0,0,pi/4,1,1,pi/10])
 
-t = linspace(0,10,200)
-X, infodict = integrate.odeint(f1, X0, t, full_output=True)
-print infodict['message']
+print f1(X0)
 
-# Plot the trajectories.
-f1 = p.figure()
-for ind in range(N):
- 	p.plot(X[:,3*ind],X[:,3*ind+1])
-p.grid()
-p.xlabel('x')
-p.ylabel('y')
-p.title('Trajectory of agents.')
-p.show()
-f1.save("Trajectories_dubins.png")
+# # Integrate the system.
+
+# t = linspace(0,10,200)
+# X, infodict = integrate.odeint(f1, X0, t, full_output=True)
+# print infodict['message']
+
+# # Plot the trajectories.
+# f1 = p.figure()
+# for ind in range(N):
+#  	p.plot(X[:,3*ind],X[:,3*ind+1])
+# p.grid()
+# p.xlabel('x')
+# p.ylabel('y')
+# p.title('Trajectory of agents.')
+# p.show()
+# # f1.save("Trajectories_dubins.png")
